@@ -1,0 +1,2 @@
+aiohttp ~= 3.8.5
+fastapi[all] ~= 0.103.1
