@@ -13,7 +13,6 @@ $ cd fxdcinside.com
 $ pip install -r requirements.txt
 ```
 
-## Usage
 > **Warning**: In order for the application to function properly, an SSL certificate and a web server like Nginx are required. Please make sure to configure SSL properly and set up a reverse proxy with Nginx or a similar web server.
 
 ```
@@ -22,6 +21,7 @@ $ uvicorn app:app
 $ uvicorn app:app --port <port>
 ```
 
+## Usage
 Add `fx` before your `gall.dcinside.com` link to make it `gall.fxdcinside.com`
 
 ## License
