@@ -30,21 +30,21 @@ async def fetch_open_graph_meta_tags(url: str) -> Dict[str, str]:
     try:
         async with aiohttp.ClientSession() as session:
             headers = {
-                'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
             }
             async with session.get(url, headers=headers) as resp:
                 resp.raise_for_status()
                 soup = BeautifulSoup(await resp.text(), "html.parser")
                 return {
-                    'title': soup.find("meta", property="og:title")["content"],
-                    'description': soup.find("meta", property="og:description")["content"],
-                    'image': soup.find("meta", property="og:image")["content"]
+                    "title": soup.find("meta", property="og:title")["content"],
+                    "description": soup.find("meta", property="og:description")["content"],
+                    "image": soup.find("meta", property="og:image")["content"]
                 }
     except (aiohttp.ClientError, AttributeError, KeyError, TypeError):
         return {
-            'title': "갤러리 - 커뮤니티 포털 디시인사이드",
-            'description': "디시인사이드는 다양한 주제를 갤러리, 마이너 갤러리, 미니 갤러리 커뮤니티 서비스로 제공합니다. 통합검색을 이용해 여러 갤러리를 확인해 보세요.",
-            'image': "https://nstatic.dcinside.com/dc/w/images/descrip_img.png"
+            "title": "갤러리 - 커뮤니티 포털 디시인사이드",
+            "description": "디시인사이드는 다양한 주제를 갤러리, 마이너 갤러리, 미니 갤러리 커뮤니티 서비스로 제공합니다. 통합검색을 이용해 여러 갤러리를 확인해 보세요.",
+            "image": "https://nstatic.dcinside.com/dc/w/images/descrip_img.png"
         }
 
 
@@ -55,7 +55,7 @@ async def render_template(request: Request, id: str, no: int, base_url: str = "h
         url = f"{base_url}{infix}/board/view/?id={id}&no={no}"
 
     og = await fetch_open_graph_meta_tags(url)
-    return templates.TemplateResponse("redirect.html", {'request': request, 'og': og, 'url': url})
+    return templates.TemplateResponse("redirect.html", {"request": request, "og": og, "url": url})
 
 
 @app.get("/board/view/", response_class=HTMLResponse)
