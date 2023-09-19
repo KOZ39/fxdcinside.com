@@ -1,7 +1,7 @@
 # fxdcinside.com
 > Fix dcinside link preview on Discord.
 
-Implement [fixdcinside.com](https://github.com/iorphx/fixdcinside.com) with FastAPI
+Implement [fixdcinside.com](https://github.com/iorphx/fixdcinside.com) with [FastAPI](https://fastapi.tiangolo.com/)
 
 ## Requirements
 - Python 3.8+
