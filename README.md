@@ -7,18 +7,19 @@ Implement [fixdcinside.com](https://github.com/iorphx/fixdcinside.com) with [Fas
 - Python 3.8+
 
 ## Installation
-```
-$ git clone https://github.com/KOZ39/fxdcinside.com.git
-$ cd fxdcinside.com
-$ pip install -r requirements.txt
+```bash
+git clone https://github.com/KOZ39/fxdcinside.com.git
+cd fxdcinside.com
+pip install -r requirements.txt
 ```
 
-> **Warning**: In order for the application to function properly, an SSL certificate and a web server like Nginx are required. Please make sure to configure SSL properly and set up a reverse proxy with Nginx or a similar web server.
+> [!WARNING]
+> In order for the application to function properly, an SSL certificate and a web server like Nginx are required. Please make sure to configure SSL properly and set up a reverse proxy with Nginx or a similar web server.
 
-```
-$ uvicorn app:app
+```bash
+uvicorn app:app
 # or
-$ uvicorn app:app --port <port>
+uvicorn app:app --port <port>
 ```
 
 ## Usage
