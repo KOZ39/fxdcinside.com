@@ -6,24 +6,22 @@ Implement [fixdcinside.com](https://github.com/iorphx/fixdcinside.com) with [Fas
 ## Requirements
 - Python 3.8+
 
-## Installation
+## Running
 ```bash
 git clone https://github.com/KOZ39/fxdcinside.com.git
 cd fxdcinside.com
 pip install -r requirements.txt
 ```
 
-> [!WARNING]
-> In order for the application to function properly, an SSL certificate and a web server like Nginx are required. Please make sure to configure SSL properly and set up a reverse proxy with Nginx or a similar web server.
-
 ```bash
-uvicorn app:app
+uvicorn main:app
 # or
-uvicorn app:app --port <port>
+uvicorn main:app --port <port>
 ```
 
 ## Usage
-Add `fx` before your `gall.dcinside.com` link to make it `gall.fxdcinside.com`
+- Add `fx` before your `gall.dcinside.com` link to make it `gall.fxdcinside.com`
+- Add `fx` before your `m.dcinside.com` link to make it `m.fxdcinside.com`
 
 ## License
 [MIT](https://github.com/KOZ39/fxdcinside.com/blob/master/LICENSE)

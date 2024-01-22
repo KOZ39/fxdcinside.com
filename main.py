@@ -3,23 +3,13 @@ from typing import Dict
 import aiohttp
 from bs4 import BeautifulSoup
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-
-description = """
-### Usage
-Add `fx` before your `gall.dcinside.com` link to make it `gall.fxdcinside.com`
-"""
 
 app = FastAPI(
     title="Fx dcinside",
     summary="Fix dcinside link preview on Discord.",
-    description=description,
-    license_info={
-        "name": "MIT",
-        "url": "https://github.com/KOZ39/fxdcinside.com/blob/master/LICENSE",
-    },
-    docs_url="/",
+    docs_url="/docs",
     redoc_url=None
 )
 
@@ -30,7 +20,7 @@ async def fetch_open_graph_meta_tags(url: str) -> Dict[str, str]:
     try:
         async with aiohttp.ClientSession() as session:
             headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             }
             async with session.get(url, headers=headers) as resp:
                 resp.raise_for_status()
@@ -56,6 +46,11 @@ async def render_template(request: Request, id: str, no: int, base_url: str = "h
 
     og = await fetch_open_graph_meta_tags(url)
     return templates.TemplateResponse("redirect.html", {"request": request, "og": og, "url": url})
+
+
+@app.get("/")
+async def root():
+    return RedirectResponse("https://github.com/KOZ39/fxdcinside.com")
 
 
 @app.get("/board/view/", response_class=HTMLResponse)
