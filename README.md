@@ -4,7 +4,7 @@
 Implement [fixdcinside.com](https://github.com/iorphx/fixdcinside.com) with [FastAPI](https://fastapi.tiangolo.com/)
 
 ## Requirements
-- Python 3.8+
+- Python 3.10+
 
 ## Running
 ```bash
