@@ -66,35 +66,35 @@ async def root():
 
 
 @app.get("/board/view/", response_class=HTMLResponse)
-async def gallery(request: Request, id: str, no: int):
+async def gallery(id: str, no: int, request: Request):
     return await render_template(request, id, no)
 
 
 @app.get("/mgallery/board/view/", response_class=HTMLResponse)
-async def minor_gallery(request: Request, id: str, no: int):
+async def minor_gallery(id: str, no: int, request: Request):
     return await render_template(request, id, no, infix="/mgallery")
 
 
 @app.get("/mini/board/view/", response_class=HTMLResponse)
-async def mini_gallery(request: Request, id: str, no: int):
+async def mini_gallery(id: str, no: int, request: Request):
     return await render_template(request, id, no, infix="/mini")
 
 
 @app.get("/{id}/{no}", response_class=HTMLResponse)
-async def gallery(request: Request, id: str, no: int):
+async def gallery(id: str, no: int, request: Request):
     return await render_template(request, id, no, share_url=True)
 
 
 @app.get("/m/{id}/{no}", response_class=HTMLResponse)
-async def minor_gallery(request: Request, id: str, no: int):
+async def minor_gallery(id: str, no: int, request: Request):
     return await render_template(request, id, no, infix="/m", share_url=True)
 
 
 @app.get("/mini/{id}/{no}", response_class=HTMLResponse)
-async def mini_gallery(request: Request, id: str, no: int):
+async def mini_gallery(id: str, no: int, request: Request):
     return await render_template(request, id, no, infix="/mini", share_url=True)
 
 
 @app.get("/board/{id}/{no}", response_class=HTMLResponse)
-async def mobile(request: Request, id: str, no: int):
+async def mobile(id: str, no: int, request: Request):
     return await render_template(request, id, no, base_url="https://m.dcinside.com", infix="/board", share_url=True)
