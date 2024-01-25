@@ -20,8 +20,8 @@ uvicorn main:app --port <port>
 ```
 
 ## Usage
-- Add `fx` before your `gall.dcinside.com` link to make it `gall.fxdcinside.com`
-- Add `fx` before your `m.dcinside.com` link to make it `m.fxdcinside.com`
+- Add `fx` in your `gall.dcinside.com` link to make it `gall.fxdcinside.com`
+- Add `fx` in your `m.dcinside.com` link to make it `m.fxdcinside.com`
 
 ## License
 [MIT](https://github.com/KOZ39/fxdcinside.com/blob/master/LICENSE)

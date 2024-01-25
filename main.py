@@ -32,7 +32,7 @@ async def fetch_open_graph_meta_tags(url: str) -> dict[str, str]:
                     "image": soup.find("meta", property="og:image")["content"],
                 }
     except Exception as e:
-        logging.exception("beep")
+        logging.exception(e)
 
         return {
             "title": "갤러리 - 커뮤니티 포털 디시인사이드",
