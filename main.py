@@ -1,7 +1,7 @@
 import logging
 
 import aiohttp
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, SoupStrainer
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -15,6 +15,8 @@ app = FastAPI(
 
 templates = Jinja2Templates(directory="templates")
 
+only_meta_tags = SoupStrainer("meta")
+
 
 async def fetch_open_graph_meta_tags(url: str) -> dict[str, str]:
     try:
@@ -24,7 +26,7 @@ async def fetch_open_graph_meta_tags(url: str) -> dict[str, str]:
             }
             async with session.get(url, headers=headers) as resp:
                 resp.raise_for_status()
-                soup = BeautifulSoup(await resp.text(), "html.parser")
+                soup = BeautifulSoup(await resp.text(), "html.parser", parse_only=only_meta_tags)
 
                 return {
                     "title": soup.find("meta", property="og:title")["content"],
