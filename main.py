@@ -85,7 +85,8 @@ async def mini_gallery(id: str, no: int, request: Request):
 
 @app.get("/{id}/{no}", response_class=HTMLResponse)
 async def gallery(id: str, no: int, request: Request):
-    return await render_template(request, id, no, share_url=True)
+    #return await render_template(request, id, no, share_url=True)
+    return await render_template(request, id, no, base_url="https://m.dcinside.com", infix="/board", share_url=True)
 
 
 @app.get("/m/{id}/{no}", response_class=HTMLResponse)
