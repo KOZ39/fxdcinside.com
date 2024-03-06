@@ -50,7 +50,7 @@ async def render_template(
     base_url: str = "https://gall.dcinside.com",
     infix: str = "",
     share_url: bool = False,
-) -> templates.TemplateResponse:
+) -> Jinja2Templates.TemplateResponse:
     if share_url:
         url = f"{base_url}{infix}/{id}/{no}"
     else:
