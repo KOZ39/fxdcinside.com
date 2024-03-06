@@ -49,13 +49,8 @@ async def render_template(
     no: int,
     base_url: str = "https://gall.dcinside.com",
     infix: str = "",
-    share_url: bool = False,
 ) -> Jinja2Templates.TemplateResponse:
-    if share_url:
-        url = f"{base_url}{infix}/{id}/{no}"
-    else:
-        url = f"{base_url}{infix}/board/view/?id={id}&no={no}"
-
+    url = f"{base_url}{infix}/{id}/{no}"
     og = await fetch_open_graph_meta_tags(url)
 
     return templates.TemplateResponse(
@@ -73,11 +68,13 @@ async def gallery(id: str, no: int, request: Request):
     return await render_template(request, id, no)
 
 
+@app.get("/m/{id}/{no}", response_class=HTMLResponse)
 @app.get("/mgallery/board/view/", response_class=HTMLResponse)
 async def minor_gallery(id: str, no: int, request: Request):
-    return await render_template(request, id, no, infix="/mgallery")
+    return await render_template(request, id, no, infix="/m")
 
 
+@app.get("/mini/{id}/{no}", response_class=HTMLResponse)
 @app.get("/mini/board/view/", response_class=HTMLResponse)
 async def mini_gallery(id: str, no: int, request: Request):
     return await render_template(request, id, no, infix="/mini")
@@ -86,22 +83,7 @@ async def mini_gallery(id: str, no: int, request: Request):
 # 정식 갤러리와 마이너 갤러리의 단축 URL이 동일하여
 # 마이너 갤러리는 og 태그를 받아오지 못하는 문제가 있었음
 # Ref: https://github.com/KOZ39/fxdcinside.com/issues/1
-@app.get("/{id}/{no}", response_class=HTMLResponse)
-async def gallery(id: str, no: int, request: Request):
-    #return await render_template(request, id, no, share_url=True)
-    return await render_template(request, id, no, base_url="https://m.dcinside.com", infix="/board", share_url=True)
-
-
-@app.get("/m/{id}/{no}", response_class=HTMLResponse)
-async def minor_gallery(id: str, no: int, request: Request):
-    return await render_template(request, id, no, infix="/m", share_url=True)
-
-
-@app.get("/mini/{id}/{no}", response_class=HTMLResponse)
-async def mini_gallery(id: str, no: int, request: Request):
-    return await render_template(request, id, no, infix="/mini", share_url=True)
-
-
 @app.get("/board/{id}/{no}", response_class=HTMLResponse)
-async def mobile(id: str, no: int, request: Request):
-    return await render_template(request, id, no, base_url="https://m.dcinside.com", infix="/board", share_url=True)
+@app.get("/{id}/{no}", response_class=HTMLResponse)
+async def short_or_mobile(id: str, no: int, request: Request):
+    return await render_template(request, id, no, base_url="https://m.dcinside.com", infix="/board")
