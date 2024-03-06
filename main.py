@@ -83,6 +83,9 @@ async def mini_gallery(id: str, no: int, request: Request):
     return await render_template(request, id, no, infix="/mini")
 
 
+# 정식 갤러리와 마이너 갤러리의 단축 URL이 동일하여
+# 마이너 갤러리는 og 태그를 받아오지 못하는 문제가 있었음
+# Ref: https://github.com/KOZ39/fxdcinside.com/issues/1
 @app.get("/{id}/{no}", response_class=HTMLResponse)
 async def gallery(id: str, no: int, request: Request):
     #return await render_template(request, id, no, share_url=True)
