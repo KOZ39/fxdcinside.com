@@ -49,7 +49,7 @@ async def render_template(
     no: int,
     base_url: str = "https://gall.dcinside.com",
     infix: str = "",
-) -> Jinja2Templates.TemplateResponse:
+):
     url = f"{base_url}{infix}/{id}/{no}"
     og = await fetch_open_graph_meta_tags(url)
 
