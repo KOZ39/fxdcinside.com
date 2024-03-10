@@ -80,10 +80,9 @@ async def mini_gallery(id: str, no: int, request: Request):
     return await render_template(request, id, no, infix="/mini")
 
 
-# 정식 갤러리와 마이너 갤러리의 단축 URL이 동일하여
-# 마이너 갤러리는 og 태그를 받아오지 못하는 문제가 있었음
+# HACK: 마이너 갤러리 단축 주소의 301 리다이렉션 판단 불가
 # Ref: https://github.com/KOZ39/fxdcinside.com/issues/1
-@app.get("/board/{id}/{no}", response_class=HTMLResponse)
-@app.get("/{id}/{no}", response_class=HTMLResponse)
+@app.get("/board/{id}/{no}", response_class=HTMLResponse) # Mobile
+@app.get("/{id}/{no}", response_class=HTMLResponse) # Short
 async def short_or_mobile(id: str, no: int, request: Request):
     return await render_template(request, id, no, base_url="https://m.dcinside.com", infix="/board")
