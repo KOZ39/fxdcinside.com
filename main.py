@@ -37,8 +37,8 @@ async def fetch_open_graph_meta_tags(url: str) -> dict[str, str]:
         logging.exception(e)
 
         return {
-            "title": "갤러리 - 커뮤니티 포털 디시인사이드",
-            "description": "디시인사이드는 다양한 주제를 갤러리, 마이너 갤러리, 미니 갤러리 커뮤니티 서비스로 제공합니다. 통합검색을 이용해 여러 갤러리를 확인해 보세요.",
+            "title": "We are with you all the way! IT is Life! 디시인사이드 입니다.",
+            "description": "접속불가",
             "image": "https://nstatic.dcinside.com/dc/w/images/descrip_img.png",
         }
 
