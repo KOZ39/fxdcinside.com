@@ -14,9 +14,9 @@ pip install -r requirements.txt
 ```
 
 ```bash
-uvicorn main:app
+fastapi run
 # or
-uvicorn main:app --port <port>
+fastapi run --port <port>
 ```
 
 ## Usage
