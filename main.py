@@ -22,7 +22,7 @@ async def fetch_open_graph_meta_tags(url: str) -> dict[str, str]:
     try:
         async with aiohttp.ClientSession() as session:
             headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36"
             }
             async with session.get(url, headers=headers) as resp:
                 resp.raise_for_status()
