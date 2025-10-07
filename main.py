@@ -9,7 +9,7 @@ from fastapi.templating import Jinja2Templates
 app = FastAPI(
     title="Fx dcinside",
     summary="Fix dcinside link preview on Discord.",
-    docs_url="/docs",
+    docs_url=None,
     redoc_url=None,
 )
 
@@ -18,15 +18,22 @@ templates = Jinja2Templates(directory="templates")
 only_meta_tags = SoupStrainer("meta")
 
 
-async def fetch_open_graph_meta_tags(url: str) -> dict[str, str]:
+async def fetch_og_tags(url: str) -> dict[str, str]:
     try:
         async with aiohttp.ClientSession() as session:
             headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
             }
+            buf = b""
             async with session.get(url, headers=headers) as resp:
                 resp.raise_for_status()
-                soup = BeautifulSoup(await resp.text(), "html.parser", parse_only=only_meta_tags)
+                async for chunk in resp.content.iter_chunked(1024 * 16):
+                    buf += chunk
+                    if b"</head>" in buf.lower():
+                        break
+                resp.close()
+
+                soup = BeautifulSoup(buf.decode(errors="ignore"), "html.parser", parse_only=only_meta_tags)
 
                 return {
                     "title": soup.find("meta", property="og:title")["content"],
@@ -43,7 +50,7 @@ async def fetch_open_graph_meta_tags(url: str) -> dict[str, str]:
         }
 
 
-async def render_template(
+async def template_or_redirect(
     request: Request,
     id: str,
     no: int,
@@ -51,11 +58,15 @@ async def render_template(
     infix: str = "",
 ):
     url = f"{base_url}{infix}/{id}/{no}"
-    og = await fetch_open_graph_meta_tags(url)
+    ua = (request.headers.get("user-agent") or "").lower()
+    if "discordbot" in ua:
+        og = await fetch_og_tags(url)
 
-    return templates.TemplateResponse(
-        "redirect.html", {"request": request, "og": og, "url": url}
-    )
+        return templates.TemplateResponse(
+            "index.html", {"request": request, "og": og, "url": url}
+        )
+    else:
+        return RedirectResponse(url)
 
 
 @app.get("/", include_in_schema=False)
@@ -65,19 +76,19 @@ async def root():
 
 @app.get("/board/view/", response_class=HTMLResponse)
 async def gallery(id: str, no: int, request: Request):
-    return await render_template(request, id, no)
+    return await template_or_redirect(request, id, no)
 
 
 @app.get("/m/{id}/{no}", response_class=HTMLResponse)
 @app.get("/mgallery/board/view/", response_class=HTMLResponse)
 async def minor_gallery(id: str, no: int, request: Request):
-    return await render_template(request, id, no, infix="/m")
+    return await template_or_redirect(request, id, no, infix="/m")
 
 
 @app.get("/mini/{id}/{no}", response_class=HTMLResponse)
 @app.get("/mini/board/view/", response_class=HTMLResponse)
 async def mini_gallery(id: str, no: int, request: Request):
-    return await render_template(request, id, no, infix="/mini")
+    return await template_or_redirect(request, id, no, infix="/mini")
 
 
 # HACK: 마이너 갤러리 단축 주소의 301 리다이렉션 판단 불가
@@ -85,4 +96,4 @@ async def mini_gallery(id: str, no: int, request: Request):
 @app.get("/board/{id}/{no}", response_class=HTMLResponse) # Mobile
 @app.get("/{id}/{no}", response_class=HTMLResponse) # Short
 async def short_or_mobile(id: str, no: int, request: Request):
-    return await render_template(request, id, no, base_url="https://m.dcinside.com", infix="/board")
+    return await template_or_redirect(request, id, no, base_url="https://m.dcinside.com", infix="/board")
