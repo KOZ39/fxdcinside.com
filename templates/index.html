@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ og['title'] }}</title>
     <meta property="og:title" content="{{ og['title'] }}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ og['url'] }}">
     <meta property="og:description" content="{{ og['description'] }}">
     <meta property="og:image" content="{{ og['image'] }}">
-    <meta http-equiv="refresh" content="0; url={{ url }}">
   </head>
   <body>
-    <a href="{{ url }}">{{ url }}</a>
   </body>
 </html>
