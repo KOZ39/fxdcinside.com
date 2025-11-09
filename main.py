@@ -19,26 +19,27 @@ only_meta_tags = SoupStrainer("meta")
 
 
 async def fetch_og_tags(url: str) -> dict[str, str]:
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+    }
+    buf = b""
+
     try:
         async with aiohttp.ClientSession() as session:
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-            }
-            buf = b""
             async with session.get(url, headers=headers) as resp:
                 resp.raise_for_status()
                 async for chunk in resp.content.iter_chunked(1024 * 16):
                     buf += chunk
                     if b"</head>" in buf.lower():
                         break
-                resp.close()
 
                 soup = BeautifulSoup(buf.decode(errors="ignore"), "html.parser", parse_only=only_meta_tags)
 
                 return {
                     "title": soup.find("meta", property="og:title")["content"],
                     "description": soup.find("meta", property="og:description")["content"],
-                    "image": soup.find("meta", property="og:image")["content"],
+                    #"image": soup.find("meta", property="og:image")["content"],
+                    "image": "...",
                 }
     except Exception as e:
         logging.exception(e)
@@ -46,7 +47,7 @@ async def fetch_og_tags(url: str) -> dict[str, str]:
         return {
             "title": "We are with you all the way! IT is Life! 디시인사이드 입니다.",
             "description": "접속불가",
-            "image": "https://nstatic.dcinside.com/dc/w/images/descrip_img.png",
+            "image": "/static/descrip_img.png",
         }
 
 
@@ -59,11 +60,12 @@ async def template_or_redirect(
 ):
     url = f"{base_url}{infix}/{id}/{no}"
     ua = (request.headers.get("user-agent") or "").lower()
+
     if "discordbot" in ua:
         og = await fetch_og_tags(url)
 
         return templates.TemplateResponse(
-            "index.html", {"request": request, "og": og, "url": url}
+            "index.html", {"request": request, "og": og, "path": request['path']}
         )
     else:
         return RedirectResponse(url)
