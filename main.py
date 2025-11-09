@@ -91,6 +91,12 @@ async def mini_gallery(id: str, no: int, request: Request):
     return await template_or_redirect(request, id, no, infix="/mini")
 
 
+@app.get("/person/{id}/{no}", response_class=HTMLResponse)
+@app.get("/person/board/view/", response_class=HTMLResponse)
+async def mini_gallery(id: str, no: int, request: Request):
+    return await template_or_redirect(request, id, no, infix="/person")
+
+
 # HACK: 마이너 갤러리 단축 주소의 301 리다이렉션 판단 불가
 # Ref: https://github.com/KOZ39/fxdcinside.com/issues/1
 @app.get("/board/{id}/{no}", response_class=HTMLResponse) # Mobile
