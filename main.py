@@ -4,6 +4,7 @@ import aiohttp
 from bs4 import BeautifulSoup, SoupStrainer
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 app = FastAPI(
@@ -12,6 +13,8 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None,
 )
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
 
@@ -95,7 +98,7 @@ async def mini_gallery(id: str, no: int, request: Request):
 
 @app.get("/person/{id}/{no}", response_class=HTMLResponse)
 @app.get("/person/board/view/", response_class=HTMLResponse)
-async def mini_gallery(id: str, no: int, request: Request):
+async def person_gallery(id: str, no: int, request: Request):
     return await template_or_redirect(request, id, no, infix="/person")
 
 
