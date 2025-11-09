@@ -3,8 +3,11 @@
 
 Implement [fixdcinside.com](https://github.com/i0rph/fixdcinside.com) with [FastAPI](https://fastapi.tiangolo.com/)
 
+> [!WARNING]
+> This repository is for backup purposes and may not exactly match the code used in the production environment.
+
 ## Requirements
-- Python 3.10+
+- Python 3.14+
 
 ## Running
 ```bash
@@ -16,7 +19,7 @@ pip install -r requirements.txt
 ```bash
 fastapi run
 # or
-fastapi run --port <port>
+fastapi run --host 0.0.0.0 --port <port>
 ```
 
 ## Usage
