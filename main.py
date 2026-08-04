@@ -1,6 +1,8 @@
 import asyncio
 import logging
 from contextlib import asynccontextmanager
+from dataclasses import dataclass
+from time import monotonic
 
 import aiohttp
 from bs4 import BeautifulSoup, SoupStrainer
@@ -20,6 +22,9 @@ HTTP_TIMEOUT = aiohttp.ClientTimeout(
 
 MAX_HEAD_BYTES = 512 * 1024
 
+OG_CACHE_TTL_SECONDS = 10 * 60
+OG_CACHE_MAX_SIZE = 512
+
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
     "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -31,12 +36,20 @@ class HtmlHeadTooLargeError(ValueError):
     """The HTML head exceeds the allowed size."""
 
 
+@dataclass(slots=True)
+class CacheEntry:
+    value: dict[str, str]
+    expires_at: float
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.http_session = aiohttp.ClientSession(
         timeout=HTTP_TIMEOUT,
         headers={"User-Agent": USER_AGENT},
     )
+    app.state.og_cache: dict[str, CacheEntry] = {}
+    app.state.og_cache_lock = asyncio.Lock()
 
     try:
         yield
@@ -59,7 +72,65 @@ templates = Jinja2Templates(directory="templates")
 only_meta_tags = SoupStrainer("meta")
 
 
+async def get_cached_og_tags(
+    request: Request,
+    url: str,
+) -> dict[str, str] | None:
+    cache: dict[str, CacheEntry] = request.app.state.og_cache
+    lock: asyncio.Lock = request.app.state.og_cache_lock
+    now = monotonic()
+
+    async with lock:
+        entry = cache.get(url)
+
+        if entry is None:
+            return None
+
+        if entry.expires_at <= now:
+            del cache[url]
+            return None
+
+        return entry.value.copy()
+
+
+async def cache_og_tags(
+    request: Request,
+    url: str,
+    og: dict[str, str],
+) -> None:
+    cache: dict[str, CacheEntry] = request.app.state.og_cache
+    lock: asyncio.Lock = request.app.state.og_cache_lock
+    now = monotonic()
+
+    async with lock:
+        expired_urls = [
+            cached_url
+            for cached_url, entry in cache.items()
+            if entry.expires_at <= now
+        ]
+
+        for expired_url in expired_urls:
+            del cache[expired_url]
+
+        cache.pop(url, None)
+
+        while len(cache) >= OG_CACHE_MAX_SIZE:
+            oldest_url = next(iter(cache))
+            del cache[oldest_url]
+
+        cache[url] = CacheEntry(
+            value=og.copy(),
+            expires_at=now + OG_CACHE_TTL_SECONDS,
+        )
+
+
 async def fetch_og_tags(request: Request, url: str) -> dict[str, str]:
+    cached_og = await get_cached_og_tags(request, url)
+
+    if cached_og is not None:
+        logger.debug("OG cache hit: url=%s", url)
+        return cached_og
+
     session: aiohttp.ClientSession = request.app.state.http_session
     buf = bytearray()
 
@@ -87,12 +158,16 @@ async def fetch_og_tags(request: Request, url: str) -> dict[str, str]:
 
         soup = BeautifulSoup(bytes(buf), "html.parser", parse_only=only_meta_tags)
 
-        return {
+        og = {
             "title": soup.find("meta", property="og:title")["content"],
             "description": soup.find("meta", property="og:description")["content"],
             # "image": soup.find("meta", property="og:image")["content"],
             "image": "...",
         }
+
+        await cache_og_tags(request, url, og)
+
+        return og
 
     except aiohttp.ClientResponseError as exc:
         logger.warning("dcinside returned an error: url=%s status=%s", url, exc.status)
