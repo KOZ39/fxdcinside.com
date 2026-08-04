@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ og.title }}</title>
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://fxdcinside.com{{ request.url.path }}">
+    <meta property="og:url" content="{{ canonical_url }}">
     <meta property="og:title" content="{{ og.title }}">
     <meta property="og:description" content="{{ og.description }}">
+    {% if og.image %}
     <meta property="og:image" content="{{ og.image }}">
+    {% endif %}
   </head>
   <body>
   </body>

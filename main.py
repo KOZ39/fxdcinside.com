@@ -72,6 +72,17 @@ templates = Jinja2Templates(directory="templates")
 only_meta_tags = SoupStrainer("meta")
 
 
+def make_fallback_og(image_url: str) -> dict[str, str]:
+    return {
+        "title": (
+            "We are with you all the way! "
+            "IT is Life! 디시인사이드 입니다."
+        ),
+        "description": "접속불가",
+        "image": image_url,
+    }
+
+
 async def get_cached_og_tags(
     request: Request,
     url: str,
@@ -124,7 +135,11 @@ async def cache_og_tags(
         )
 
 
-async def fetch_og_tags(request: Request, url: str) -> dict[str, str]:
+async def fetch_og_tags(
+    request: Request,
+    url: str,
+    fallback_image_url: str,
+) -> dict[str, str]:
     cached_og = await get_cached_og_tags(request, url)
 
     if cached_og is not None:
@@ -161,8 +176,7 @@ async def fetch_og_tags(request: Request, url: str) -> dict[str, str]:
         og = {
             "title": soup.find("meta", property="og:title")["content"],
             "description": soup.find("meta", property="og:description")["content"],
-            # "image": soup.find("meta", property="og:image")["content"],
-            "image": "...",
+            "image": "",
         }
 
         await cache_og_tags(request, url, og)
@@ -181,11 +195,7 @@ async def fetch_og_tags(request: Request, url: str) -> dict[str, str]:
     except Exception:
         logger.exception("failed to process OG metadata: url=%s", url)
 
-    return {
-        "title": "We are with you all the way! IT is Life! 디시인사이드 입니다.",
-        "description": "접속불가",
-        "image": "/static/descrip_img.png",
-    }
+    return make_fallback_og(fallback_image_url)
 
 
 async def template_or_redirect(
@@ -199,12 +209,26 @@ async def template_or_redirect(
     ua = (request.headers.get("user-agent") or "").lower()
 
     if "discordbot" in ua:
-        og = await fetch_og_tags(request, url)
+        canonical_url = str(request.url)
+        fallback_image_url = str(
+            request.url_for(
+                "static",
+                path="descrip_img.png",
+            )
+        )
+        og = await fetch_og_tags(
+            request,
+            url,
+            fallback_image_url,
+        )
 
         return templates.TemplateResponse(
             request,
             "index.html",
-            context={"og": og}
+            context={
+                "og": og,
+                "canonical_url": canonical_url,
+            },
         )
     else:
         return RedirectResponse(url)
