@@ -18,11 +18,17 @@ HTTP_TIMEOUT = aiohttp.ClientTimeout(
     sock_read=8,
 )
 
+MAX_HEAD_BYTES = 512 * 1024
+
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
     "AppleWebKit/537.36 (KHTML, like Gecko) "
     "Chrome/150.0.0.0 Safari/537.36"
 )
+
+
+class HtmlHeadTooLargeError(ValueError):
+    """The HTML head exceeds the allowed size."""
 
 
 @asynccontextmanager
@@ -55,19 +61,31 @@ only_meta_tags = SoupStrainer("meta")
 
 async def fetch_og_tags(request: Request, url: str) -> dict[str, str]:
     session: aiohttp.ClientSession = request.app.state.http_session
-    buf = b""
+    buf = bytearray()
 
     try:
         async with session.get(url) as response:
             response.raise_for_status()
 
             async for chunk in response.content.iter_chunked(16 * 1024):
-                buf += chunk
+                buf.extend(chunk)
 
-                if b"</head>" in buf.lower():
+                lowered_buf = buf.lower()
+                head_end = lowered_buf.find(b"</head>")
+
+                if head_end != -1:
+                    head_end += len(b"</head>")
+
+                    if head_end > MAX_HEAD_BYTES:
+                        raise HtmlHeadTooLargeError(f"HTML head exceeded {MAX_HEAD_BYTES} bytes")
+
+                    del buf[head_end:]
                     break
 
-        soup = BeautifulSoup(buf.decode(errors="ignore"), "html.parser", parse_only=only_meta_tags)
+                if len(buf) > MAX_HEAD_BYTES:
+                    raise HtmlHeadTooLargeError(f"HTML head exceeded {MAX_HEAD_BYTES} bytes")
+
+        soup = BeautifulSoup(bytes(buf), "html.parser", parse_only=only_meta_tags)
 
         return {
             "title": soup.find("meta", property="og:title")["content"],
@@ -81,6 +99,9 @@ async def fetch_og_tags(request: Request, url: str) -> dict[str, str]:
 
     except (asyncio.TimeoutError, aiohttp.ClientError) as exc:
         logger.warning("failed to fetch dcinside metadata: url=%s error=%r", url, exc)
+
+    except HtmlHeadTooLargeError:
+        logger.warning("dcinside response head was too large: url=%s limit=%s", url, MAX_HEAD_BYTES)
 
     except Exception:
         logger.exception("failed to process OG metadata: url=%s", url)
