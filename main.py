@@ -1,4 +1,6 @@
+import asyncio
 import logging
+from contextlib import asynccontextmanager
 
 import aiohttp
 from bs4 import BeautifulSoup, SoupStrainer
@@ -7,11 +9,41 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+
+logger = logging.getLogger(__name__)
+
+HTTP_TIMEOUT = aiohttp.ClientTimeout(
+    total=15,
+    connect=5,
+    sock_read=8,
+)
+
+USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/150.0.0.0 Safari/537.36"
+)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.http_session = aiohttp.ClientSession(
+        timeout=HTTP_TIMEOUT,
+        headers={"User-Agent": USER_AGENT},
+    )
+
+    try:
+        yield
+    finally:
+        await app.state.http_session.close()
+
+
 app = FastAPI(
     title="Fx dcinside",
     summary="Fix dcinside link preview on Discord.",
     docs_url=None,
     redoc_url=None,
+    lifespan=lifespan,
 )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -21,37 +53,43 @@ templates = Jinja2Templates(directory="templates")
 only_meta_tags = SoupStrainer("meta")
 
 
-async def fetch_og_tags(url: str) -> dict[str, str]:
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
-    }
+async def fetch_og_tags(request: Request, url: str) -> dict[str, str]:
+    session: aiohttp.ClientSession = request.app.state.http_session
     buf = b""
 
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=headers) as resp:
-                resp.raise_for_status()
-                async for chunk in resp.content.iter_chunked(1024 * 16):
-                    buf += chunk
-                    if b"</head>" in buf.lower():
-                        break
+        async with session.get(url) as response:
+            response.raise_for_status()
 
-                soup = BeautifulSoup(buf.decode(errors="ignore"), "html.parser", parse_only=only_meta_tags)
+            async for chunk in response.content.iter_chunked(16 * 1024):
+                buf += chunk
 
-                return {
-                    "title": soup.find("meta", property="og:title")["content"],
-                    "description": soup.find("meta", property="og:description")["content"],
-                    #"image": soup.find("meta", property="og:image")["content"],
-                    "image": "...",
-                }
-    except Exception as e:
-        logging.exception(e)
+                if b"</head>" in buf.lower():
+                    break
+
+        soup = BeautifulSoup(buf.decode(errors="ignore"), "html.parser", parse_only=only_meta_tags)
 
         return {
-            "title": "We are with you all the way! IT is Life! 디시인사이드 입니다.",
-            "description": "접속불가",
-            "image": "/static/descrip_img.png",
+            "title": soup.find("meta", property="og:title")["content"],
+            "description": soup.find("meta", property="og:description")["content"],
+            # "image": soup.find("meta", property="og:image")["content"],
+            "image": "...",
         }
+
+    except aiohttp.ClientResponseError as exc:
+        logger.warning("dcinside returned an error: url=%s status=%s", url, exc.status)
+
+    except (asyncio.TimeoutError, aiohttp.ClientError) as exc:
+        logger.warning("failed to fetch dcinside metadata: url=%s error=%r", url, exc)
+
+    except Exception:
+        logger.exception("failed to process OG metadata: url=%s", url)
+
+    return {
+        "title": "We are with you all the way! IT is Life! 디시인사이드 입니다.",
+        "description": "접속불가",
+        "image": "/static/descrip_img.png",
+    }
 
 
 async def template_or_redirect(
@@ -65,7 +103,7 @@ async def template_or_redirect(
     ua = (request.headers.get("user-agent") or "").lower()
 
     if "discordbot" in ua:
-        og = await fetch_og_tags(url)
+        og = await fetch_og_tags(request, url)
 
         return templates.TemplateResponse(
             request,
