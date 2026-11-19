@@ -28,7 +28,7 @@ OG_CACHE_MAX_SIZE = 512
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
     "AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/150.0.0.0 Safari/537.36"
+    "Chrome/158.0.0.0 Safari/537.36"
 )
 
 
