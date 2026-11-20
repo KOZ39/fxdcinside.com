@@ -236,29 +236,31 @@ async def root():
 
 
 @app.get("/board/view/", response_class=HTMLResponse)
+@app.get("/board/view", response_class=HTMLResponse)
 async def gallery(id: str, no: int, request: Request):
     return await template_or_redirect(request, id, no)
 
 
-@app.get("/m/{id}/{no}", response_class=HTMLResponse)
+@app.get("/m/{id}/{no:int}", response_class=HTMLResponse)
 @app.get("/mgallery/board/view/", response_class=HTMLResponse)
 async def minor_gallery(id: str, no: int, request: Request):
     return await template_or_redirect(request, id, no, infix="/m")
 
 
-@app.get("/mini/{id}/{no}", response_class=HTMLResponse)
+@app.get("/mini/{id}/{no:int}", response_class=HTMLResponse)
 @app.get("/mini/board/view/", response_class=HTMLResponse)
 async def mini_gallery(id: str, no: int, request: Request):
     return await template_or_redirect(request, id, no, infix="/mini")
 
 
-@app.get("/person/{id}/{no}", response_class=HTMLResponse)
+@app.get("/person/{id}/{no:int}", response_class=HTMLResponse)
 @app.get("/person/board/view/", response_class=HTMLResponse)
 async def person_gallery(id: str, no: int, request: Request):
     return await template_or_redirect(request, id, no, infix="/person")
 
 
 @app.get("/board/lists/", response_class=HTMLResponse)
+@app.get("/board/lists", response_class=HTMLResponse)
 @app.get("/mgallery/board/lists/", response_class=HTMLResponse)
 @app.get("/mini/board/lists/", response_class=HTMLResponse)
 @app.get("/person/board/lists/", response_class=HTMLResponse)
@@ -269,7 +271,7 @@ async def gallery_list(id: str, request: Request):
     )
 
 
-# /{id}/{no}가 /board/{id}에도 매칭되므로 그보다 먼저 등록해야 함
+# /board/{id}가 /board/view와 /board/lists에도 매칭되므로 그보다 뒤에 등록해야 함
 @app.get("/board/{id}", response_class=HTMLResponse)
 @app.get("/mini/{id}", response_class=HTMLResponse)
 async def mobile_gallery_list(id: str, request: Request):
@@ -278,7 +280,7 @@ async def mobile_gallery_list(id: str, request: Request):
 
 # HACK: 마이너 갤러리 단축 주소의 301 리다이렉션 판단 불가
 # Ref: https://github.com/KOZ39/fxdcinside.com/issues/1
-@app.get("/board/{id}/{no}", response_class=HTMLResponse) # Mobile
-@app.get("/{id}/{no}", response_class=HTMLResponse) # Short
+@app.get("/board/{id}/{no:int}", response_class=HTMLResponse) # Mobile
+@app.get("/{id}/{no:int}", response_class=HTMLResponse) # Short
 async def short_or_mobile(id: str, no: int, request: Request):
     return await template_or_redirect(request, id, no, base_url="https://m.dcinside.com", infix="/board")
