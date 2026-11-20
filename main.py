@@ -49,7 +49,6 @@ async def lifespan(app: FastAPI):
         headers={"User-Agent": USER_AGENT},
     )
     app.state.og_cache: dict[str, CacheEntry] = {}
-    app.state.og_cache_lock = asyncio.Lock()
 
     try:
         yield
@@ -83,56 +82,50 @@ def make_fallback_og(image_url: str) -> dict[str, str]:
     }
 
 
-async def get_cached_og_tags(
+def get_cached_og_tags(
     request: Request,
     url: str,
 ) -> dict[str, str] | None:
     cache: dict[str, CacheEntry] = request.app.state.og_cache
-    lock: asyncio.Lock = request.app.state.og_cache_lock
-    now = monotonic()
+    entry = cache.get(url)
 
-    async with lock:
-        entry = cache.get(url)
+    if entry is None:
+        return None
 
-        if entry is None:
-            return None
+    if entry.expires_at <= monotonic():
+        del cache[url]
+        return None
 
-        if entry.expires_at <= now:
-            del cache[url]
-            return None
-
-        return entry.value.copy()
+    return entry.value
 
 
-async def cache_og_tags(
+def cache_og_tags(
     request: Request,
     url: str,
     og: dict[str, str],
 ) -> None:
     cache: dict[str, CacheEntry] = request.app.state.og_cache
-    lock: asyncio.Lock = request.app.state.og_cache_lock
     now = monotonic()
 
-    async with lock:
-        expired_urls = [
-            cached_url
-            for cached_url, entry in cache.items()
-            if entry.expires_at <= now
-        ]
+    expired_urls = [
+        cached_url
+        for cached_url, entry in cache.items()
+        if entry.expires_at <= now
+    ]
 
-        for expired_url in expired_urls:
-            del cache[expired_url]
+    for expired_url in expired_urls:
+        del cache[expired_url]
 
-        cache.pop(url, None)
+    cache.pop(url, None)
 
-        while len(cache) >= OG_CACHE_MAX_SIZE:
-            oldest_url = next(iter(cache))
-            del cache[oldest_url]
+    while len(cache) >= OG_CACHE_MAX_SIZE:
+        oldest_url = next(iter(cache))
+        del cache[oldest_url]
 
-        cache[url] = CacheEntry(
-            value=og.copy(),
-            expires_at=now + OG_CACHE_TTL_SECONDS,
-        )
+    cache[url] = CacheEntry(
+        value=og,
+        expires_at=now + OG_CACHE_TTL_SECONDS,
+    )
 
 
 async def fetch_og_tags(
@@ -140,7 +133,7 @@ async def fetch_og_tags(
     url: str,
     fallback_image_url: str,
 ) -> dict[str, str]:
-    cached_og = await get_cached_og_tags(request, url)
+    cached_og = get_cached_og_tags(request, url)
 
     if cached_og is not None:
         logger.debug("OG cache hit: url=%s", url)
@@ -179,7 +172,7 @@ async def fetch_og_tags(
             "image": "",
         }
 
-        await cache_og_tags(request, url, og)
+        cache_og_tags(request, url, og)
 
         return og
 
@@ -260,6 +253,7 @@ async def mini_gallery(id: str, no: int, request: Request):
 @app.get("/person/board/view/", response_class=HTMLResponse)
 async def person_gallery(id: str, no: int, request: Request):
     return await template_or_redirect(request, id, no, infix="/person")
+
 
 
 # HACK: 마이너 갤러리 단축 주소의 301 리다이렉션 판단 불가
