@@ -191,7 +191,7 @@ async def fetch_og_tags(
     return make_fallback_og(fallback_image_url)
 
 
-async def template_or_redirect(
+async def article_or_redirect(
     request: Request,
     id: str,
     no: int,
@@ -238,25 +238,25 @@ async def root():
 @app.get("/board/view/", response_class=HTMLResponse)
 @app.get("/board/view", response_class=HTMLResponse)
 async def gallery(id: str, no: int, request: Request):
-    return await template_or_redirect(request, id, no)
+    return await article_or_redirect(request, id, no)
 
 
 @app.get("/m/{id}/{no:int}", response_class=HTMLResponse)
 @app.get("/mgallery/board/view/", response_class=HTMLResponse)
 async def minor_gallery(id: str, no: int, request: Request):
-    return await template_or_redirect(request, id, no, infix="/m")
+    return await article_or_redirect(request, id, no, infix="/m")
 
 
 @app.get("/mini/{id}/{no:int}", response_class=HTMLResponse)
 @app.get("/mini/board/view/", response_class=HTMLResponse)
 async def mini_gallery(id: str, no: int, request: Request):
-    return await template_or_redirect(request, id, no, infix="/mini")
+    return await article_or_redirect(request, id, no, infix="/mini")
 
 
 @app.get("/person/{id}/{no:int}", response_class=HTMLResponse)
 @app.get("/person/board/view/", response_class=HTMLResponse)
 async def person_gallery(id: str, no: int, request: Request):
-    return await template_or_redirect(request, id, no, infix="/person")
+    return await article_or_redirect(request, id, no, infix="/person")
 
 
 @app.get("/board/lists/", response_class=HTMLResponse)
@@ -283,4 +283,4 @@ async def mobile_gallery_list(id: str, request: Request):
 @app.get("/board/{id}/{no:int}", response_class=HTMLResponse) # Mobile
 @app.get("/{id}/{no:int}", response_class=HTMLResponse) # Short
 async def short_or_mobile(id: str, no: int, request: Request):
-    return await template_or_redirect(request, id, no, base_url="https://m.dcinside.com", infix="/board")
+    return await article_or_redirect(request, id, no, base_url="https://m.dcinside.com", infix="/board")
