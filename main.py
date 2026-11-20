@@ -7,7 +7,7 @@ from time import monotonic
 import aiohttp
 from bs4 import BeautifulSoup, SoupStrainer
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -57,10 +57,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Fx dcinside",
-    summary="Fix dcinside link preview on Discord.",
-    docs_url=None,
-    redoc_url=None,
+    openapi_url=None,
     lifespan=lifespan,
 )
 
@@ -230,40 +227,40 @@ async def render_or_redirect(request: Request, url: str):
         return RedirectResponse(url)
 
 
-@app.get("/", include_in_schema=False)
+@app.get("/")
 async def root():
     return RedirectResponse("https://github.com/KOZ39/fxdcinside.com")
 
 
-@app.get("/board/view/", response_class=HTMLResponse)
-@app.get("/board/view", response_class=HTMLResponse)
+@app.get("/board/view/")
+@app.get("/board/view")
 async def gallery(id: str, no: int, request: Request):
     return await article_or_redirect(request, id, no)
 
 
-@app.get("/m/{id}/{no:int}", response_class=HTMLResponse)
-@app.get("/mgallery/board/view/", response_class=HTMLResponse)
+@app.get("/m/{id}/{no:int}")
+@app.get("/mgallery/board/view/")
 async def minor_gallery(id: str, no: int, request: Request):
     return await article_or_redirect(request, id, no, infix="/m")
 
 
-@app.get("/mini/{id}/{no:int}", response_class=HTMLResponse)
-@app.get("/mini/board/view/", response_class=HTMLResponse)
+@app.get("/mini/{id}/{no:int}")
+@app.get("/mini/board/view/")
 async def mini_gallery(id: str, no: int, request: Request):
     return await article_or_redirect(request, id, no, infix="/mini")
 
 
-@app.get("/person/{id}/{no:int}", response_class=HTMLResponse)
-@app.get("/person/board/view/", response_class=HTMLResponse)
+@app.get("/person/{id}/{no:int}")
+@app.get("/person/board/view/")
 async def person_gallery(id: str, no: int, request: Request):
     return await article_or_redirect(request, id, no, infix="/person")
 
 
-@app.get("/board/lists/", response_class=HTMLResponse)
-@app.get("/board/lists", response_class=HTMLResponse)
-@app.get("/mgallery/board/lists/", response_class=HTMLResponse)
-@app.get("/mini/board/lists/", response_class=HTMLResponse)
-@app.get("/person/board/lists/", response_class=HTMLResponse)
+@app.get("/board/lists/")
+@app.get("/board/lists")
+@app.get("/mgallery/board/lists/")
+@app.get("/mini/board/lists/")
+@app.get("/person/board/lists/")
 async def gallery_list(id: str, request: Request):
     return await render_or_redirect(
         request,
@@ -272,15 +269,15 @@ async def gallery_list(id: str, request: Request):
 
 
 # /board/{id}가 /board/view와 /board/lists에도 매칭되므로 그보다 뒤에 등록해야 함
-@app.get("/board/{id}", response_class=HTMLResponse)
-@app.get("/mini/{id}", response_class=HTMLResponse)
+@app.get("/board/{id}")
+@app.get("/mini/{id}")
 async def mobile_gallery_list(id: str, request: Request):
     return await render_or_redirect(request, f"https://m.dcinside.com{request.url.path}")
 
 
 # HACK: 마이너 갤러리 단축 주소의 301 리다이렉션 판단 불가
 # Ref: https://github.com/KOZ39/fxdcinside.com/issues/1
-@app.get("/board/{id}/{no:int}", response_class=HTMLResponse) # Mobile
-@app.get("/{id}/{no:int}", response_class=HTMLResponse) # Short
+@app.get("/board/{id}/{no:int}") # Mobile
+@app.get("/{id}/{no:int}") # Short
 async def short_or_mobile(id: str, no: int, request: Request):
     return await article_or_redirect(request, id, no, base_url="https://m.dcinside.com", infix="/board")
