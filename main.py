@@ -198,7 +198,10 @@ async def template_or_redirect(
     base_url: str = "https://gall.dcinside.com",
     infix: str = "",
 ):
-    url = f"{base_url}{infix}/{id}/{no}"
+    return await render_or_redirect(request, f"{base_url}{infix}/{id}/{no}")
+
+
+async def render_or_redirect(request: Request, url: str):
     ua = (request.headers.get("user-agent") or "").lower()
 
     if "discordbot" in ua:
@@ -254,6 +257,23 @@ async def mini_gallery(id: str, no: int, request: Request):
 async def person_gallery(id: str, no: int, request: Request):
     return await template_or_redirect(request, id, no, infix="/person")
 
+
+@app.get("/board/lists/", response_class=HTMLResponse)
+@app.get("/mgallery/board/lists/", response_class=HTMLResponse)
+@app.get("/mini/board/lists/", response_class=HTMLResponse)
+@app.get("/person/board/lists/", response_class=HTMLResponse)
+async def gallery_list(id: str, request: Request):
+    return await render_or_redirect(
+        request,
+        f"https://gall.dcinside.com{request.url.path}?{request.url.query}",
+    )
+
+
+# /{id}/{no}가 /board/{id}에도 매칭되므로 그보다 먼저 등록해야 함
+@app.get("/board/{id}", response_class=HTMLResponse)
+@app.get("/mini/{id}", response_class=HTMLResponse)
+async def mobile_gallery_list(id: str, request: Request):
+    return await render_or_redirect(request, f"https://m.dcinside.com{request.url.path}")
 
 
 # HACK: 마이너 갤러리 단축 주소의 301 리다이렉션 판단 불가
